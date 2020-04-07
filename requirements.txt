@@ -1,0 +1,5 @@
+tqdm
+imageio
+jinja2
+numpy
+openslide-python
