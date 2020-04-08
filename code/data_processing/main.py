@@ -2,8 +2,8 @@ __author__ = 'marvinler'
 
 import os
 
-from tcga_weakly_mil_tumor_segmentation import get_logger
-from tcga_weakly_mil_tumor_segmentation.data_processing import svs_factory, case_factory
+from code import get_logger
+from code.data_processing import case_factory, svs_factory
 
 desired_magnification = 20
 desired_tile_width = 224
@@ -20,9 +20,9 @@ assert test_size > 0
 
 
 def main(source_folder, output_folder, gdc_executable_path):
-    logger = get_logger(os.path.join(source_folder, 'code.data_processing.main.logs'), verbose=True)
-    logger.info('Source folder %s' % source_folder)
-    logger.info('Output folder %s' % output_folder)
+    logger = get_logger(filename_handler='data_processing.log', verbose=True)
+    logger.info('Source folder %s' % os.path.abspath(source_folder))
+    logger.info('Output folder %s' % os.path.abspath(output_folder))
     logger.info('Meta-parameters:')
     logger.info('  desired_magnification %s' % str(desired_magnification))
     logger.info('  tile_width %s' % str(desired_tile_width))
@@ -108,7 +108,7 @@ def main(source_folder, output_folder, gdc_executable_path):
 
 
 if __name__ == '__main__':
-    source_folder = '/home/mrv/Documents/thesis/data/TCGA_download_documents/TCGA_brain_allTS (copy)'
-    output_folder = '/home/mrv/Documents/thesis/data/TCGA_download_documents/lalala'
-    gdc_client = '/home/mrv/Documents/thesis/data/TCGA_download_documents/TCGA_brain_allTS (copy)/gdc-client'
+    source_folder = 'data/'
+    output_folder = 'data/processed/'
+    gdc_client = os.path.join(source_folder, 'gdc-client')
     main(source_folder, output_folder, gdc_client)

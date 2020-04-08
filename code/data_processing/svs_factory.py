@@ -8,8 +8,8 @@ import imageio
 import shutil
 from concurrent import futures
 
-from tcga_weakly_mil_tumor_segmentation import N_PROCESSES
-from tcga_weakly_mil_tumor_segmentation.ext import deepzoom_tile
+from code import N_PROCESSES
+from ext import deepzoom_tile
 
 
 def download_svs_files(source_folder, gdc_executable_path):

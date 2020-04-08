@@ -3,3 +3,5 @@ imageio
 jinja2
 numpy
 openslide-python
+torch
+torchvision
