@@ -14,10 +14,10 @@ def infer_class_from_tcga_name(tcga_slide_filename):
     return int(sample_code < 10)
 
 
-def split_svs_samples_casewise(svs_files, associated_cases_ids, train_size, val_size, test_size, seed=123):
+def split_svs_samples_casewise(svs_files, associated_cases_ids, val_size, test_size, seed=123):
     assert len(svs_files) == len(associated_cases_ids), 'Expected same number of SVS files than associated case ID'
     random.seed(seed)
-    assert train_size + val_size + test_size == 1.
+    train_size = 1. - val_size - test_size
 
     unique_cases_ids = list(set(associated_cases_ids))
     random.shuffle(unique_cases_ids)
