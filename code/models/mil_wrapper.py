@@ -21,7 +21,7 @@ class MaxMinMIL(nn.Module):
         if cuda:
             self.loss_function.cuda()
 
-        self.cuda = cuda
+        self.use_cuda = cuda
 
     def loss(self, predictions, computed_instances_labels, mask_instances_labels):
         """
@@ -34,7 +34,7 @@ class MaxMinMIL(nn.Module):
         :return: batch-averaged loss signal
         """
         instance_wise_loss = self.loss_function(predictions, computed_instances_labels)
-        averaged_loss = (instance_wise_loss * mask_instances_labels) / mask_instances_labels.sum()
+        averaged_loss = (instance_wise_loss * mask_instances_labels).sum() / mask_instances_labels.sum()
         return averaged_loss
 
     def forward(self, instances, bag_label):
@@ -63,7 +63,7 @@ class MaxMinMIL(nn.Module):
                 computed_instances_labels[:] = 0.
                 mask_instances_labels[bottomk_idx] = 1.
 
-        if self.cuda:
+        if self.use_cuda:
             computed_instances_labels = computed_instances_labels.cuda()
             mask_instances_labels = mask_instances_labels.cuda()
 
