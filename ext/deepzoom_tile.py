@@ -64,7 +64,13 @@ class TileWorker(Process):
             if last_associated != associated:
                 dz = self._get_dz(associated)
                 last_associated = associated
-            tile = dz.get_tile(level, address)
+            # Modification 15/01/20 by marvinler
+            # tile = dz.get_tile(level, address)
+            try:
+                tile = dz.get_tile(level, address)
+            except Exception:
+                self._queue.task_done()
+                continue
             tile.save(outfile, quality=self._quality)
             self._queue.task_done()
 
