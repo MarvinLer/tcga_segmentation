@@ -47,7 +47,9 @@ def replace_last_layer(model, model_type, n_classes):
 def instantiate_model(model_type, pretrained, n_classes):
     model = get_original_classifier(model_type, pretrained)
     model = replace_last_layer(model, model_type, n_classes)
-    return model
+
+    input_width = 299 if 'inception' in model_type else 224
+    return model, input_width
 
 
 if __name__ == '__main__':
