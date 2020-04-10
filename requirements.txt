@@ -3,5 +3,6 @@ imageio
 jinja2
 numpy
 openslide-python
-torch
-torchvision
+torch>=1.4.0
+torchvision>=0.4.0
+matplotlib
