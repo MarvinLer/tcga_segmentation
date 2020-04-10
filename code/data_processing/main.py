@@ -21,7 +21,7 @@ assert test_size > 0
 
 def main(source_folder, output_folder, gdc_executable_path):
     logger = get_logger(filename_handler='data_processing.log', verbose=True)
-    logger.info('Source folder %s' % os.path.abspath(source_folder))
+    logger.info('Source folder %s' % os.path.abspath(source_folder) if source_folder else 'None')
     logger.info('Output folder %s' % os.path.abspath(output_folder))
     logger.info('Meta-parameters:')
     logger.info('  desired_magnification %s' % str(desired_magnification))
@@ -104,11 +104,11 @@ def main(source_folder, output_folder, gdc_executable_path):
         #                                                                                          val_size,
         #                                                                                          test_size)
 
-    return data_folders
+    return list(map(lambda f: os.path.join(output_folder, f), data_folders))
 
 
 if __name__ == '__main__':
     source_folder = 'data/'
-    output_folder = 'data/processed/'
+    output_folder = 'data/preprocessed/'
     gdc_client = os.path.join(source_folder, 'gdc-client')
     main(source_folder, output_folder, gdc_client)
