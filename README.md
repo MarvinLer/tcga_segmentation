@@ -30,13 +30,12 @@ If you use this software or any part of this software in your research,
 please use the following BibTeX entry.
 
 ```BibTeX
-@misc{lerousseau2020weaklyseg,
-  author =       {Marvin Lerousseau, Maria Vakalopoulou, Marion Classe, 
-                  Julien Adam, Enzo Battistella, Alexandre Carr\'{e}, 
-                  Th\'{e}o Estienne, Th\'{e}ophraste Henry, Eric Deutsch 
-                  and Nikos Paragios},
-  title =        {Weakly supervised multiple instance learning 
-                  histopathological tumor segmentation},
-  year =         {2020}
+@misc{lerousseau2020weakly,
+    title={Weakly supervised multiple instance learning histopathological tumor segmentation},
+    author={Marvin Lerousseau and Maria Vakalopoulou and Marion Classe and Julien Adam and Enzo Battistella and Alexandre Carré and Théo Estienne and Théophraste Henry and Eric Deutsch and Nikos Paragios},
+    year={2020},
+    eprint={2004.05024},
+    archivePrefix={arXiv},
+    primaryClass={eess.IV}
 }
 ```
