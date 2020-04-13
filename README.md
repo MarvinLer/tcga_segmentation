@@ -3,6 +3,11 @@ The Cancer Genome Atlas download documents, as well as a complete implementation
 of deep learning tumor segmentation from WSI binary labels as detailed in 
 "Weakly supervised multiple instance learning histopathological tumor segmentation".
 
+<div align="center">
+  <img alt="Example of WSI segmentations" src="img/example.gif" />
+  <p>2 examples of Whole Slide Image tumor segmentation (black background; blue: normal tissue; pink: neoplastic tissue).</p>
+</div>
+
 ## Major features
 This software is entirely written in Python3 and contains two major parts:
 * a tool to automatically download data from [TCGA GDC Data Portal](https://portal.gdc.cancer.gov/),
