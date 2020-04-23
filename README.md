@@ -5,7 +5,7 @@ of deep learning tumor segmentation from WSI binary labels as detailed in
 
 <div align="center">
   <img alt="Example of WSI segmentations" src="img/example.gif" />
-  <p>2 examples of Whole Slide Image tumor segmentation (black background; blue: normal tissue; pink: neoplastic tissue).</p>
+  <p>Example of Whole Slide Image tumor segmentation (black background; blue: normal tissue; pink: neoplastic tissue).</p>
 </div>
 
 ## Major features
@@ -18,11 +18,40 @@ labels indicating the presence of tumor in each WSI.
 
 ## Installation
 
-See [INSTALL.md](INSTALL.md). (in construction)
+Use python3 and install mandatory libraries:
+```
+virtualenv -p python3 --system-site-packages venv
+source venv/bin/activate
+pip install -r requirements.txt 
+```
 
 ## Quick Start
 
-See [GETTING_STARTED.md](GETTING_STARTED.md). (in construction)
+### Downloading TCGA cohorts + WSI pre-processing
+
+0. Download the [GDC Data Transfer Tool](https://gdc.cancer.gov/access-data/gdc-data-transfer-tool) executable (not included here for license issues)
+1. Constitute any cohort on the [TCGA GDC Data Portal](https://portal.gdc.cancer.gov/), then download
+the associated manifest file, and place it in a `source_folder`
+2. Launch the download and pre-processing pipeline with:
+<pre>
+python -m code.data_processing.main --gdc <i>gdc_executable_path</i> source_folder
+</pre>
+
+This script first downloads all files in the manifest file, then tiles WSI, extracts tiles of a given magnification, 
+removes background tiles, and finally seeks to extract per-slide binary labels from their name. More information 
+[here _(in construction)_](code/data_processing/README.md).
+
+### Training WSI segmentation models
+
+After data download and pre-processing has been performed, launch the training pipeline using:
+```
+python -m code.training --preprocessed-data-folder ./data/preprocessed --alpha 0.1 --beta 0.
+```
+
+Many parameters are tunable, see `python -m code.training --help`
+
+More informations about the training pipeline, including available imaging models 
+[here _(in construction)_](code/README.md).
 
 ## License
 

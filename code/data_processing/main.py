@@ -108,7 +108,14 @@ def main(source_folder, output_folder, gdc_executable_path):
 
 
 if __name__ == '__main__':
-    source_folder = 'data/'
-    output_folder = 'data/preprocessed/'
-    gdc_client = os.path.join(source_folder, 'gdc-client')
+    import sys
+    if len(sys.argv) != 4:
+        print('Usage: python -m code.data_processing.%s --gdc-executable gdc_executable_path '
+              'source_folder_containing_manifest' % '.'.join(os.path.basename(sys.argv[0]).split('.')[:-1]))
+        exit(-1)
+    gdc_client = sys.argv[-2]
+    source_folder = sys.argv[-1]
+    output_folder = os.path.join(source_folder, 'preprocessed')
+    print('    The resulting downloaded/processed data will be available in %s and %s' % (
+        source_folder, output_folder))
     main(source_folder, output_folder, gdc_client)
