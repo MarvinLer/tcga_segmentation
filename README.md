@@ -15,6 +15,8 @@ which also handles tiles extraction, background removal, and tumor label extract
 * an end-to-end pytorch software that can train many types of common image classifier
 architectures for the task of tumor segmentation on WSI based on weak binary WSI 
 labels indicating the presence of tumor in each WSI.
+* a [collection](results/README.md) of 6481 semi-automatically generated tumor maps for the entire snap-frozen WSI of 
+TCGA repository for breast, kidney, and bronchus and lung locations.
 
 ## Installation
 
