@@ -75,3 +75,7 @@ please use the following BibTeX entry.
     primaryClass={eess.IV}
 }
 ```
+
+or
+
+> Lerousseau, Marvin, Maria Vakalopoulou, Marion Classe, Julien Adam, Enzo Battistella, Alexandre Carré, Théo Estienne, Théophraste Henry, Eric Deutsch, and Nikos Paragios. "Weakly supervised multiple instance learning histopathological tumor segmentation." arXiv preprint arXiv:2004.05024 (2020).
