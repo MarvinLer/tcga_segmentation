@@ -56,11 +56,11 @@ class MaxMinMIL(nn.Module):
             mask_instances_labels[:] = 1.
         else:  # otherwise, ensure alpha% of instances are positive, and beta% are negative, based on probabilities
             _, topk_idx = torch.topk(instances_predictions, k=int(self.alpha*n_instances), dim=0)
-            computed_instances_labels[:] = 1.
+            computed_instances_labels[topk_idx] = 1.
             mask_instances_labels[topk_idx] = 1.
             if self.beta > 0.:
                 _, bottomk_idx = torch.topk(instances_predictions, k=int(self.beta*n_instances), largest=False, dim=0)
-                computed_instances_labels[:] = 0.
+                computed_instances_labels[bottomk_idx] = 0.
                 mask_instances_labels[bottomk_idx] = 1.
 
         if self.use_cuda:
