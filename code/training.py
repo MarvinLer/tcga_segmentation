@@ -240,17 +240,15 @@ def main(hyper_parameters):
     instance_classifier, input_width = instantiate_model(model_type=hyper_parameters['underlying_model_type'],
                                                          pretrained=hyper_parameters['underlying_model_pretrained'],
                                                          n_classes=1)
+    logger.info(f'  {hyper_parameters["underlying_model_type"]} architecture initialized')
     mil_model = MaxMinMIL(instance_classifier,
                           alpha=hyper_parameters['alpha'],
                           beta=hyper_parameters['beta'],
                           cuda=hyper_parameters['cuda'])
-    logger.info('Instance model:')
-    logger.info(instance_classifier)
-    logger.info('MIL wrapper model:')
-    logger.info(mil_model)
+    logger.info('  mil wrapper initialized')
 
     if hyper_parameters['underlying_model_load_from'] is not None:
-        logger.warning('Initializing model from %s' % hyper_parameters['underlying_model_load_from'])
+        logger.warning('  Initializing model from %s' % hyper_parameters['underlying_model_load_from'])
         mil_model.load_state_dict(torch.load(hyper_parameters['underlying_model_load_from']))
 
     if hyper_parameters['cuda']:
@@ -258,18 +256,10 @@ def main(hyper_parameters):
         if n_devices > 1:
             mil_model = nn.DataParallel(mil_model)
         mil_model.cuda()
+    logger.info('done')
 
     optimizer = optim.Adam(mil_model.parameters(), lr=hyper_parameters['learning_rate'],
                            weight_decay=hyper_parameters['weight_decay'])
-
-    # Log model's and optimizer's state_dict
-    logger.info("  Model's state_dict:")
-    for param_tensor in mil_model.state_dict():
-        logger.info(
-            '   ' + param_tensor + " " * (40 - len(param_tensor)) + str(mil_model.state_dict()[param_tensor].size()))
-    logger.info("  Optimizer's state_dict:")
-    for var_name in optimizer.state_dict():
-        logger.info('   ' + var_name + " " * (20 - len(var_name)) + str(optimizer.state_dict()[var_name]))
 
     # Load data and split case-wise into train, val and test sets
     logger.info('Pre-loading all data...')
@@ -282,8 +272,8 @@ def main(hyper_parameters):
     logger.info('Test size %d' % len(test_dataset))
 
     train_dataloader = to_dataloader(train_dataset, True)
-    val_dataloader = to_dataloader(val_dataset, False)
-    test_dataloader = to_dataloader(test_dataset, False)
+    val_dataloader = to_dataloader(val_dataset, False) if len(val_dataset) else None
+    test_dataloader = to_dataloader(test_dataset, False) if len(test_dataset) else None
 
     # Instantiate summary writer if tensorboard activated
     if hyper_parameters['with_tensorboard']:
@@ -304,26 +294,28 @@ def main(hyper_parameters):
                                                    logger=logger, set_name='training', summary_writer=summary_writer)
 
         # Validate
-        with torch.no_grad():
-            val_loss, _ = perform_epoch(mil_model, optimizer, epoch, val_dataloader,
-                                        hyper_parameters=hyper_parameters, is_training=False,
-                                        logger=logger, set_name='validation', summary_writer=summary_writer)
+        if val_dataloader:
+            with torch.no_grad():
+                val_loss, _ = perform_epoch(mil_model, optimizer, epoch, val_dataloader,
+                                            hyper_parameters=hyper_parameters, is_training=False,
+                                            logger=logger, set_name='validation', summary_writer=summary_writer)
 
-        # Early stopping
-        val_losses.append(val_loss)
-        do_stop, best_value = early_stopping(val_losses, patience=hyper_parameters['early_stopping_patience'])
-        if do_stop:
-            logger.warning('Early stopping triggered: stopping training after no improvement on val set for '
-                           '%d epochs with value %.3f' % (hyper_parameters['early_stopping_patience'], best_value))
-            break
+            # Early stopping
+            val_losses.append(val_loss)
+            do_stop, best_value = early_stopping(val_losses, patience=hyper_parameters['early_stopping_patience'])
+            if do_stop:
+                logger.warning('Early stopping triggered: stopping training after no improvement on val set for '
+                               '%d epochs with value %.3f' % (hyper_parameters['early_stopping_patience'], best_value))
+                break
 
     logger.warning('Total training time %s' % (time.time() - start_training_time))
 
     # Test
-    logger.info('Starting testing...')
-    with torch.no_grad():
-        perform_epoch(mil_model, optimizer, -1, test_dataloader, hyper_parameters=hyper_parameters,
-                      is_training=False, logger=logger, set_name='test', summary_writer=summary_writer)
+    if test_dataloader:
+        logger.info('Starting testing...')
+        with torch.no_grad():
+            perform_epoch(mil_model, optimizer, -1, test_dataloader, hyper_parameters=hyper_parameters,
+                          is_training=False, logger=logger, set_name='test', summary_writer=summary_writer)
 
     return
 
