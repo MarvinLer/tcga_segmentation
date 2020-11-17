@@ -4,7 +4,7 @@ From our experiments, three segmentation models were extracted: one with high sp
 one with high sensitivity, and one with good specificity and sensitivity. These 3 models were 
 ensembled using a non-parametrized decision tree.
 
-For each WSI, the 3-headed system produces one probability for each 224 pixel-width tile at 20x 
+For each WSI, the 3-headed system produces one probability for each 224 pixel-width tile at 10x 
 magnification, resulting in a segmentation with granularity 112x112μm². Additionally, all tiles of WSI labelled as 
 normal ones are manually put to 0.
 
