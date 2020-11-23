@@ -63,7 +63,7 @@ def define_args():
 
     parser.add_argument('--dataset-max-size', type=int, default=None, metavar='SEED',
                         help='max number of slides per split set train/val/test')
-    parser.add_argument('--max-bag-size', type=int, default=None, metavar='SEED',
+    parser.add_argument('--max-bag-size', type=int, default=100, metavar='SEED',
                         help='max number of instances per bag (will randomly select if there are more)')
     parser.add_argument('--val-size', type=float, default=0.1, metavar='PROPORTION',
                         help='% of cases used for validation set')
