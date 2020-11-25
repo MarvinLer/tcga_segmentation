@@ -1,84 +1,98 @@
 __author__ = 'marvinler'
 
+import argparse
+import datetime
+import os
+import pprint
+import time
+from time import gmtime, strftime
+
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.utils.data
 from torch.utils.tensorboard import SummaryWriter
 
-import argparse
-import os
-import time
-import numpy as np
-import pprint
-import datetime
-
 from code import N_PROCESSES, get_logger
-from code.data_processing.main import main as end_to_end_data_preprocessing
-from code.data_processing.pytorch_dataset import Dataset
 from code.data_processing.case_factory import split_svs_samples_casewise
-from code.models.mil_wrapper import MaxMinMIL
+from code.data_processing.pytorch_dataset import Dataset
 from code.models.image_classifiers import instantiate_model
+from code.models.mil_wrapper import MaxMinMIL
+from code.data_processing.main import main as end_to_end_data_preprocessing
+from code.data_processing.main import get_parser as pre_processing_get_parser
 
 
 def define_args():
-    parser = argparse.ArgumentParser(description='PyTorch MNIST bags Example')
-    parser.add_argument('--preprocessed-data-folder', type=str, default='./data/preprocessed', metavar='PATH',
-                        help='path of parent folder containing preprocessed slides data')
+    # Get argparser from pre-processing module
+    pre_processing_parser = pre_processing_get_parser()
+    pre_processing_parser._action_groups[1].title = 'pre-processing options'
+    to_remove_arg = pre_processing_parser._actions[1]
+    to_remove_arg.container._remove_action(to_remove_arg)
 
+    parser = argparse.ArgumentParser(description='Module to perform training of the segmentation method presented in '
+                                                 'the paper. When no pre-processed data is available, perform '
+                                                 'pre-processing using the pre-processing module.',
+                                     parents=[pre_processing_parser], add_help=False,
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    # Arguments about the tile dataset
+    parser.add_argument('--input-data-folder', type=str, default='./data', metavar='PATH',
+                        help='path of parent folder containing preprocessed slides data; if data has not been '
+                             'pre-processed yet, perform pre-processing first')
+
+    # Meta-parameter of the method
     parser.add_argument('--alpha', type=float, default=0.1, metavar='PERCENT',
-                        help='assumed minimal % of tumor extent in tumor slides')
+                        help='assumed minimal %% of tumor extent in tumor slides')
     parser.add_argument('--beta', type=float, default=0., metavar='PERCENT',
-                        help='assumed minimal % of non-tumor extent in tumor slides')
+                        help='assumed minimal %% of non-tumor extent in tumor slides')
 
+    # Parameters of the underlying model
     parser.add_argument('--underlying-model-type', type=str, default='resnet18', metavar='MODEL',
                         help='type of underlying model to use: this is the instance classifier architecture')
     parser.add_argument('--pretrained', action='store_true', default=False,
                         help='use pretrained underlying architecture as init point')
     parser.add_argument('--load-from', type=str, default=None, metavar='PT_PATH',
                         help='model pt path from which to initialize training')
-    parser.add_argument('--no-save-model', action='store_true', default=False,
-                        help='toggle model saving')
-    parser.add_argument('--save-model-timesteps', type=int, default=5,
-                        help='number of epochs for each model save')
+    parser.add_argument('--no-save-model', action='store_true', default=False, help='toggle model saving')
+    parser.add_argument('--save-model-timesteps', type=int, default=5, help='number of epochs for each model save')
     parser.add_argument('--save-model-folder', type=str, default='./saved_models/',
                         help='folder in which to save model')
 
-    parser.add_argument('--lr', type=float, default=0.0005, metavar='LR',
-                        help='learning rate (default: 0.01)')
-    parser.add_argument('--reg', type=float, default=10e-5, metavar='R',
-                        help='weight decay')
-    parser.add_argument('--epochs', type=int, default=20, metavar='N',
-                        help='number of epochs to train (default: 10)')
-    parser.add_argument('--timestep-epoch', type=int, default=None, metavar='N',
-                        help='number of step per epoch')
-    parser.add_argument('--no-cuda', action='store_true', default=False,
-                        help='disables CUDA training')
-    parser.add_argument('--without-data-augmentation', action='store_true', default=False,
-                        help='use data augmentation')
+    # Training parameters
+    parser.add_argument('--lr', type=float, default=0.0005, metavar='LR', help='learning rate')
+    parser.add_argument('--reg', type=float, default=10e-5, metavar='R', help='weight decay')
+    parser.add_argument('--epochs', type=int, default=20, metavar='N', help='number of epochs to train')
+    parser.add_argument('--timestep-epoch', type=int, default=None, metavar='N', help='number of step per epoch')
+    parser.add_argument('--no-cuda', action='store_true', default=False, help='disables CUDA training')
+    parser.add_argument('--without-data-augmentation', action='store_true', default=False, help='use data augmentation')
     parser.add_argument('--patience', type=int, default=10, metavar='N_EPOCHS',
                         help='number of epochs (patience) for early stopping callback')
     parser.add_argument('--no-tensorboard', action='store_true', default=False,
                         help='disables tensorboard losses logging')
 
+    # Dataset parameters
     parser.add_argument('--dataset-max-size', type=int, default=None, metavar='SEED',
                         help='max number of slides per split set train/val/test')
     parser.add_argument('--max-bag-size', type=int, default=100, metavar='SEED',
                         help='max number of instances per bag (will randomly select if there are more)')
     parser.add_argument('--val-size', type=float, default=0.1, metavar='PROPORTION',
-                        help='% of cases used for validation set')
+                        help='%% of cases used for validation set')
     parser.add_argument('--test-size', type=float, default=0.15, metavar='PROPORTION',
-                        help='% of cases used for test set')
+                        help='%% of cases used for test set')
 
     parser.add_argument('--verbose', '-v', action='store_true', default=False,
                         help='put logger console handler level to logging.DEBUG')
-    parser.add_argument('--seed', type=int, default=123, metavar='SEED',
-                        help='seed for datasets creation')
+    parser.add_argument('--seed', type=int, default=123, metavar='SEED', help='seed for datasets creation')
 
     args = parser.parse_args()
 
     hyper_parameters = {
-        'preprocessed_data_folder': args.preprocessed_data_folder,
+        'input_data_folder': args.input_data_folder,
+        'gdc_executable': args.gdc_executable,
+        'manifest_file': args.manifest,
+        'do_download': not args.no_download,
+        'source_slides_folder': args.source_slides_folder,
+
         'alpha': args.alpha,
         'beta': args.beta,
 
@@ -162,7 +176,7 @@ def early_stopping(val_losses, patience):
     return False, None
 
 
-def perform_epoch(model, optimizer, epoch, dataloader, hyper_parameters, is_training, logger, set_name,
+def perform_epoch(model, optimizer, epoch, dataloader, hyper_parameters, is_training, logger, set_name, prefix_time,
                   summary_writer=None):
     if is_training:
         model.train()
@@ -212,9 +226,8 @@ def perform_epoch(model, optimizer, epoch, dataloader, hyper_parameters, is_trai
 
     # Save model
     if hyper_parameters['save_model'] and is_training and epoch % hyper_parameters['save_model_timesteps'] == 0:
-        date_prefix = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
         save_path = os.path.join(hyper_parameters['models_save_folder'],
-                                 '{}_epoch{}_loss{:.3f}.pt'.format(date_prefix, epoch, mean_epoch_loss))
+                                 '{}_epoch{}_loss{:.3f}.pt'.format(prefix_time, epoch, mean_epoch_loss))
         torch.save(model.state_dict(), save_path)
         logger.info('  saved model @%s' % save_path)
     else:
@@ -224,14 +237,17 @@ def perform_epoch(model, optimizer, epoch, dataloader, hyper_parameters, is_trai
 
 
 def main(hyper_parameters):
-    logger = get_logger(filename_handler='training.log', verbose=hyper_parameters['verbose'])
+    prefix_time = strftime("%Y-%m-%d %H:%M:%S", gmtime())
+    logger = get_logger(filename_handler='code.' + __file__ + '_' + prefix_time + '.log',
+                        verbose=hyper_parameters['verbose'])
     logger.info('Hyper parameters')
     logger.info(pprint.pformat(hyper_parameters, indent=4))
 
     # Pre-processing should have been done beforehand, retrieve data by specifying data preprocessing output folder
-    slides_folders = end_to_end_data_preprocessing(source_folder=None,
-                                                   output_folder=hyper_parameters['preprocessed_data_folder'],
-                                                   gdc_executable_path=None)
+    slides_folders = end_to_end_data_preprocessing(hyper_parameters['input_data_folder'],
+                                                   hyper_parameters['do_download'], hyper_parameters['gdc_executable'],
+                                                   hyper_parameters['manifest_file'],
+                                                   hyper_parameters['source_slides_folder'])
 
     logger.info('Initializing model... ')
     if not os.path.exists(hyper_parameters['models_save_folder']):
@@ -277,7 +293,7 @@ def main(hyper_parameters):
 
     # Instantiate summary writer if tensorboard activated
     if hyper_parameters['with_tensorboard']:
-        summary_writer_filename = 'summary_' + datetime.datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        summary_writer_filename = 'summary_' + prefix_time
         summary_writer_folder_path = os.path.join('tensorboard', summary_writer_filename)
         summary_writer = SummaryWriter(log_dir=summary_writer_folder_path)
     else:
@@ -291,14 +307,16 @@ def main(hyper_parameters):
         # Train
         train_loss, train_savepath = perform_epoch(mil_model, optimizer, epoch, train_dataloader,
                                                    hyper_parameters=hyper_parameters, is_training=True,
-                                                   logger=logger, set_name='training', summary_writer=summary_writer)
+                                                   logger=logger, set_name='training',
+                                                   prefix_time=prefix_time, summary_writer=summary_writer)
 
         # Validate
         if val_dataloader:
             with torch.no_grad():
                 val_loss, _ = perform_epoch(mil_model, optimizer, epoch, val_dataloader,
                                             hyper_parameters=hyper_parameters, is_training=False,
-                                            logger=logger, set_name='validation', summary_writer=summary_writer)
+                                            logger=logger, set_name='validation', prefix_time=prefix_time,
+                                            summary_writer=summary_writer)
 
             # Early stopping
             val_losses.append(val_loss)
@@ -315,7 +333,8 @@ def main(hyper_parameters):
         logger.info('Starting testing...')
         with torch.no_grad():
             perform_epoch(mil_model, optimizer, -1, test_dataloader, hyper_parameters=hyper_parameters,
-                          is_training=False, logger=logger, set_name='test', summary_writer=summary_writer)
+                          is_training=False, logger=logger, set_name='test', prefix_time=prefix_time,
+                          summary_writer=summary_writer)
 
     return
 

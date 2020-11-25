@@ -12,24 +12,11 @@ from code import N_PROCESSES
 from ext import deepzoom_tile
 
 
-def download_svs_files(source_folder, gdc_executable_path):
-    assert os.path.exists(gdc_executable_path), "GDC executable not found at location %s" % gdc_executable_path
-
-    # Retrieve files of the input folder, and seek the manifest file to be processed by GDC tool
-    files = list(map(lambda x: os.path.abspath(os.path.join(source_folder, x)),
-                     os.listdir(source_folder)))
-    files = list(filter(os.path.isfile, files))
-    manifest_file = [f for f in files if 'manifest' in f.lower()]
-    assert len(manifest_file) == 1, 'found %d manifest files, expected 1' % len(manifest_file)
-    manifest_file = manifest_file[0]
-
-    # Compute output dir: put all downloaded content in source folder
-    output_dir = os.path.dirname(manifest_file)
-
+def download_svs_files(gdc_executable_filepath, manifest_filepath, output_dir):
     # Opens manifest and retrieves the ids to be retrieved
-    with open(manifest_file, 'r') as f:
-        lines = f.read().splitlines()
-    cells = [line.split('\t') for line in lines[1:]]
+    with open(manifest_filepath, 'r') as f:
+        lines = f.read().splitlines()[1:]
+    cells = [line.split('\t') for line in lines]
     ids = [cell[0] for cell in cells]
     filenames = [cell[1] for cell in cells]
     md5sums = [cell[2] for cell in cells]
@@ -40,7 +27,7 @@ def download_svs_files(source_folder, gdc_executable_path):
     for file_id in tqdm(ids):
         # Download file if not already downloaded
         if not os.path.exists(os.path.join(output_dir, file_id)):
-            subprocess.check_output([gdc_executable_path, 'download', '--dir', output_dir,
+            subprocess.check_output([gdc_executable_filepath, 'download', '--dir', output_dir,
                                      '--n-processes', str(N_PROCESSES), file_id])
 
     # Infer resulting SVS filepaths from output_dir, id and filename of files
@@ -50,6 +37,24 @@ def download_svs_files(source_folder, gdc_executable_path):
     assert len(resulting_svs_filepaths) == len(ids) == len(md5sums) == len(cases_ids)
 
     return resulting_svs_filepaths, md5sums, cases_ids
+
+
+def list_slides_in_folder(input_folder, with_supfolder=False):
+    slides_format = ('.svs', '.vms', '.vmu', '.ndpi', '.scn', '.mrxs', '.tif', '.tiff', '.bif')
+
+    all_files_folders = list(map(lambda f: os.path.join(input_folder, f), os.listdir(input_folder)))
+    if with_supfolder:
+        only_folders = list(filter(lambda f: not os.path.isfile(f), all_files_folders))
+        # list all slides within each folder of the input folder
+        all_slides = [list(map(lambda f: os.path.join(folder, f),
+                               list(filter(lambda f: f.endswith(slides_format), os.listdir(folder)))))
+                      for folder in only_folders]
+        # flatten
+        all_slides = [slide for slide_group in all_slides for slide in slide_group]
+        return all_slides
+
+    only_files = list(filter(os.path.isfile, all_files_folders))
+    return list(filter(lambda f: f.endswith(slides_format), only_files))
 
 
 def tile_slide(slide_filepath, desired_tile_with, desired_overlap, desired_magnification):
@@ -94,7 +99,7 @@ def tile_slides(slides_filepaths, desired_tile_with, desired_overlap, desired_ma
 
 
 def _compute_pixelwise_is_background(jpeg_file, background_pixel_value):
-    """ Load image, then return pixelwise True or False if all RGB values are above provided value """
+    """ Load image, then return pixel-wise True or False if all RGB values are above provided value """
     img = imageio.imread(jpeg_file)
 
     channel_above_threshold = img > background_pixel_value
@@ -109,7 +114,7 @@ def is_tile_mostly_background(img_filepath, background_pixel_value, background_t
 
     :param img_filepath: abs path to jpeg/jpg/png image
     :param background_pixel_value: threshold above which a channel pixel is considered background
-    :param background_threshold: percent above which a tile is considered backgrond based on is pixel background
+    :param background_threshold: percent above which a tile is considered background based on is pixel background
     :param expected_shape: expected shape of tile
     """
     img, pixel_above_threshold = _compute_pixelwise_is_background(img_filepath, background_pixel_value)
@@ -132,7 +137,7 @@ def move_and_filter_tiles_folders(tiles_folders, classes, slides_id, cases_ids, 
     :param cases_ids: WSI associated cases IDs for further case-wise dataset splitting
     :param output_folder: parent folder in which to create 1 folder per each input WSI
     :param background_pixel_value: threshold above which a channel pixel is considered background
-    :param background_threshold: percent above which a tile is considered backgrond based on is pixel background
+    :param background_threshold: percent above which a tile is considered background based on is pixel background
     :param expected_shape: expected shape of tile; tiles of different shape are discarded (e.g. extrema ones)
     :param logger: logger object to print some info
     :return: list of output processed slides folders, 1 per input WSI except for bugged WSI
@@ -181,7 +186,7 @@ def move_and_filter_tiles_folders(tiles_folders, classes, slides_id, cases_ids, 
                                     for img_filename in images_filenames]
                 list(pool.map(move_jpeg_file, images_filepaths))
         except (SyntaxError, ValueError) as e:
-            logger.warn('  discarding %s because some image files are corrumpted: %s' % (slide_id, e))
+            logger.warn('  discarding %s because some image files are corrupted: %s' % (slide_id, e))
             continue
 
     # return all destination slides folders
