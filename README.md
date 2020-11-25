@@ -3,6 +3,8 @@ The Cancer Genome Atlas download documents, as well as a complete implementation
 of deep learning tumor segmentation from WSI binary labels as detailed in 
 "Weakly supervised multiple instance learning histopathological tumor segmentation".
 
+[Download 6461 tumor maps from The Cancer Genome Atlas](https://github.com/MarvinLer/tcga_segmentation/releases/download/v1.0.0/thresholded_tumor_maps.zip)
+
 <div align="center">
   <img alt="Example of WSI segmentations" src="img/example.gif" />
   <p>Example of Whole Slide Image tumor segmentation (black background; blue: normal tissue; pink: neoplastic tissue).</p>
