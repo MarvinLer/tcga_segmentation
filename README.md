@@ -68,16 +68,16 @@ If you use this software or any part of this software in your research,
 please use the following BibTeX entry.
 
 ```BibTeX
-@misc{lerousseau2020weakly,
-    title={Weakly supervised multiple instance learning histopathological tumor segmentation},
-    author={Marvin Lerousseau and Maria Vakalopoulou and Marion Classe and Julien Adam and Enzo Battistella and Alexandre Carré and Théo Estienne and Théophraste Henry and Eric Deutsch and Nikos Paragios},
-    year={2020},
-    eprint={2004.05024},
-    archivePrefix={arXiv},
-    primaryClass={eess.IV}
+@inproceedings{lerousseau2020weakly,
+  title={Weakly supervised multiple instance learning histopathological tumor segmentation},
+  author={Lerousseau, Marvin and Vakalopoulou, Maria and Classe, Marion and Adam, Julien and Battistella, Enzo and Carr{\'e}, Alexandre and Estienne, Th{\'e}o and Henry, Th{\'e}ophraste and Deutsch, Eric and Paragios, Nikos},
+  booktitle={International Conference on Medical Image Computing and Computer-Assisted Intervention},
+  pages={470--479},
+  year={2020},
+  organization={Springer}
 }
 ```
 
 or
 
-> Lerousseau, Marvin, Maria Vakalopoulou, Marion Classe, Julien Adam, Enzo Battistella, Alexandre Carré, Théo Estienne, Théophraste Henry, Eric Deutsch, and Nikos Paragios. "Weakly supervised multiple instance learning histopathological tumor segmentation." arXiv preprint arXiv:2004.05024 (2020).
+> Lerousseau M, Vakalopoulou M, Classe M, Adam J, Battistella E, Carré A, Estienne T, Henry T, Deutsch E, Paragios N. Weakly supervised multiple instance learning histopathological tumor segmentation. InInternational Conference on Medical Image Computing and Computer-Assisted Intervention 2020 Oct 4 (pp. 470-479). Springer, Cham.
