@@ -64,8 +64,7 @@ This software is released under the
 
 ## Citation
 
-If you use this software or any part of this software in your research, 
-please use the following BibTeX entry.
+If you use this repo or find it useful, please consider citing:
 
 ```BibTeX
 @inproceedings{lerousseau2020weakly,
