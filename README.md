@@ -49,7 +49,7 @@ removes background tiles, and finally seeks to extract per-slide binary labels f
 
 After data download and pre-processing has been performed, launch the training pipeline using:
 ```
-python -m code.training --preprocessed-data-folder ./data/preprocessed --alpha 0.1 --beta 0. --max-bag-size 100
+python -m code.training --source-slides-folder ./data/preprocessed --alpha 0.1 --beta 0. --max-bag-size 100 --no-download
 ```
 
 Many parameters are tunable, see `python -m code.training --help`
